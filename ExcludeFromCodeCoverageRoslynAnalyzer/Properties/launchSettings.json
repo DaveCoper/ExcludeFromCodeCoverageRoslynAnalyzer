@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SampleForRoslyGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\Repos\\TIPSWEB\\common\\sb-quality-api.sln"
+    }
+  }
+}
