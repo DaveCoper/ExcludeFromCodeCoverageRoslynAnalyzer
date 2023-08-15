@@ -49,7 +49,7 @@ namespace ExcludeFromCodeCoverageRoslynAnalyzer
                 logger.LogInformation($"Loading solution {slnPath}.");
 
                 var currSolution = await workspace.OpenSolutionAsync(slnPath);
-                bool hasChanges = false;
+                bool projectHasChanges = false;
 
                 foreach (var currProject in currSolution.Projects)
                 {
@@ -74,13 +74,18 @@ namespace ExcludeFromCodeCoverageRoslynAnalyzer
 
                         var root = tree.GetRoot();
                         var rewriter = new IgnoreTestsSyntaxRewriter();
-                        root = rewriter.Visit(root);
-                        var newDocument = document.WithSyntaxRoot(root);
+                        var newRoot = rewriter.Visit(root);
+                        var documentHasChanges = root != newRoot;
+                        projectHasChanges |= documentHasChanges;
 
-                        currSolution = currSolution.WithDocumentSyntaxRoot(document.Id, root);
+                        if (documentHasChanges)
+                        {
+                            var newDocument = document.WithSyntaxRoot(newRoot);
+                            currSolution = currSolution.WithDocumentSyntaxRoot(document.Id, newRoot);
+                        }
                     }
 
-                    if (hasChanges)
+                    if (projectHasChanges)
                     {
                         logger.LogInformation("Applying changes to sollution {0}", currSolution.Id.Id);
                         if (workspace.TryApplyChanges(currSolution))
