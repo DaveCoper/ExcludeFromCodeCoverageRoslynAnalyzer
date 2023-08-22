@@ -8,16 +8,16 @@ namespace ExcludeFromCodeCoverageRoslynAnalyzer
     {
         public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            if (node.BaseList != null &&
-                node.BaseList.Types.Any(tp => tp.Type?.ToString().StartsWith("DefaultDataGridConfigurationBase") == true &&
-                !HasAttribute(node, "ExcludeFromCodeCoverage")))
+            if ((HasAttribute(node, "TestClass") || node.BaseList != null &&
+                node.BaseList.Types.Any(IsExcludedType)) &&
+                !HasAttribute(node, "ExcludeFromCodeCoverage"))
             {
                 var newAttribute = SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage"));
                 var syntaxList = SyntaxFactory.SeparatedList<AttributeSyntax>();
                 syntaxList = syntaxList.Add(newAttribute);
 
                 var attributes = SyntaxFactory.AttributeList(syntaxList)
-                    .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia("\n    "))
+                    .WithTrailingTrivia(SyntaxFactory.ParseTrailingTrivia(Environment.NewLine))
                     .WithLeadingTrivia(SyntaxFactory.ParseLeadingTrivia("    "));
 
                 // save comments
@@ -30,10 +30,23 @@ namespace ExcludeFromCodeCoverageRoslynAnalyzer
                 node = node.AddAttributeLists(attributes);
 
                 // restore comments to make them first
-                node = node.WithLeadingTrivia(trivia);
+                return node.WithLeadingTrivia(trivia);
             }
 
-            return node;
+            return node; ;
+        }
+
+        private bool IsExcludedType(BaseTypeSyntax tp)
+        {
+            var typeName = tp.Type?.ToString();
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+
+            return typeName.StartsWith("DefaultDataGridConfigurationBase") ||
+                typeName.StartsWith("IDefaultButtonPane") ||
+                typeName.StartsWith("PresentationMetadataBase") ||
+                typeName.StartsWith("DefaultColorConfigurationBase") ||
+                typeName.StartsWith("DefaultDataAreaConfigurationBase");
         }
 
         private bool HasAttribute(ClassDeclarationSyntax classDeclaration, string name)

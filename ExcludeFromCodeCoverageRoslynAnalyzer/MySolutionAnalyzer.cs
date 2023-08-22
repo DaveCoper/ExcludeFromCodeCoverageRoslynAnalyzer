@@ -2,6 +2,7 @@
 
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -80,7 +81,7 @@ namespace ExcludeFromCodeCoverageRoslynAnalyzer
 
                         if (documentHasChanges)
                         {
-                            var newDocument = document.WithSyntaxRoot(newRoot);
+                            var newDocument = document.WithSyntaxRoot(Formatter.Format(newRoot, workspace));
                             currSolution = currSolution.WithDocumentSyntaxRoot(document.Id, newRoot);
                         }
                     }
